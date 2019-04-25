@@ -79,6 +79,7 @@ def main():
     dataset_name = ""
     for n_db in range(0, len(config.dataset.name)):
         dataset_name = dataset_name + config.dataset.name[n_db] + "_"
+    import ipdb; ipdb.set_trace()
     dataset_train = \
         eval(dataset_name + "Dataset")(train_imdbs, True, '', config.train.patch_width, config.train.patch_height,
                                        config.train.rect_3d_width, config.train.rect_3d_height, batch_size,

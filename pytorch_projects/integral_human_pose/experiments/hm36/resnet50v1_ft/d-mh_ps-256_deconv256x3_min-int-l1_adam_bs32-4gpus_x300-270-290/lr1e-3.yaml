@@ -7,16 +7,12 @@ pytorch:
   loss: 'integral'
 dataset:
   name:
-   - 'mpii'
    - 'hm36'
   path:
-   - 'mpii'
    - 'hm36'
   train_image_set:
    - 'train'
-   - 'train'
   test_image_set:
-   - 'valid'
    - 'validmin'
 dataiter:
     batch_images_per_ctx: 32
