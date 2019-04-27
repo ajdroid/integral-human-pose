@@ -28,9 +28,9 @@ class KinematicLayer(nn.Module):
         self.shape[Shape.Shoulder2Elbow] = 250.0
         self.shape[Shape.Torso2Shoulder] = 170.0
         self.shape = self.shape / self.SHAPE_NORM
-        self.kinematic_operator = Operation()
+        self.kinematic_operator = Operation(self.SHAPE_NORM)
 
-        self.joint = [ [] for i in range(Joint.NUM_JOINTS)]
+        self.joint = [ [] for i in range(Joint.ORIG_NUM_JOINTS)]
 
         #Root
         self.joint[Joint.Pelvis].append(('global_trans', - 1))
@@ -109,10 +109,10 @@ class KinematicLayer(nn.Module):
         self.joint[Joint.R_Wrist].append(('rot_x', Motion.R_Elbow_RotX))
         self.joint[Joint.R_Wrist].append(('minus_y', Shape.Elbow2Wrist))
 
-        related = [[False]*Joint.NUM_JOINTS for _ in range(Motion.NUM_PARAMETERS)]
+        related = [[False]*Joint.ORIG_NUM_JOINTS for _ in range(Motion.NUM_PARAMETERS)]
 
         for j in range(Motion.NUM_PARAMETERS):
-            for i in range(Joint.NUM_JOINTS):
+            for i in range(Joint.ORIG_NUM_JOINTS):
                 related[j][i] = False
                 for k in range(len(self.joint[i]) -1, 0, -1):
                     if (self.joint[i][k][0] == 'rot_x') or (self.joint[i][k][0] == 'rot_y') \
@@ -139,29 +139,34 @@ class KinematicLayer(nn.Module):
         return ko.mm(v)
 
     def forward(self, x):
-        out = torch.empty(3*Joint.NUM_JOINTS)
+        out = torch.empty(3*Joint.ORIG_NUM_JOINTS + 3)
         out.requires_grad = True
-        for i in range(Joint.NUM_JOINTS):
+        for i in range(Joint.ORIG_NUM_JOINTS):
             v = torch.Tensor([[0.], [0.], [0.], [1.]])
             v.requires_grad = True
             # v = torch.transpose(v, 0)
             for k in range(len(self.joint[i])-1, 0, -1):
-                v = self.update(self.joint[i][k][0], x, self.joint[i][k][1], v, 1)
+                v = self.update(self.joint[i][k][0], x[:-1], self.joint[i][k][1], v, x[-1])
             v = v.view(1,-1)
             out[3*i: 3*i + 3] = v[0,:-1].squeeze()
+
+        out[-3:] = (out[8*3: 8*3 + 3] + out[6*3:6*3 + 3] )/ 2.
 
         return out
         
 if __name__ == '__main__':
     KL = KinematicLayer()
-    bottom_data = torch.zeros(Joint.NUM_JOINTS * Motion.NUM_PARAMETERS)
+
+    #Plus one for scale
+    bottom_data = torch.zeros(Joint.ORIG_NUM_JOINTS * Motion.NUM_PARAMETERS + 1)
     # bottom_data[0] = 3.14
-    # bottom_data[15] = -3.14/4
+    bottom_data[15] = -3.14/4
     bottom_data.requires_grad = True
+    bottom_data[-1] = 1
     # ind = 0
     # v = torch.ones(4,1)
     # v.requires_grad = True
-    scale = 1
+    # scale = 1
     out= KL.forward(bottom_data)
     out_np = out.cpu().detach().numpy()
     # ipdb.set_trace()
@@ -174,5 +179,6 @@ if __name__ == '__main__':
     z = out_np[2::3]
     ax.scatter(out_np[0::3], out_np[1::3], out_np[2::3])
     ax.plot(out_np[0::3], out_np[1::3], out_np[2::3])
+
     plt.show()
     # v=KL.update('plus_y', bottom_data, ind, v, scale)

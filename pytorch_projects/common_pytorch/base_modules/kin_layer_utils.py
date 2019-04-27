@@ -72,7 +72,7 @@ Joint = IntEnum('Joint', zip(['R_Ankle',
                                 'L_Shoulder',
                                 'L_Elbow',
                                 'L_Wrist',
-                                'NUM_JOINTS'], count()))
+                                'ORIG_NUM_JOINTS'], count()))
 
 #Define Kinematic Operator
 class Operation(object):
@@ -87,7 +87,8 @@ class Operation(object):
         shape: torch.Tensor, bone length vector
     return: torch.Tensor, Transformation Matrix M
     """
-    def __init__(self,):
+    def __init__(self,SHAPE_NORM):
+        self.SHAPE_NORM = SHAPE_NORM
         return
     def __call__(self, method_name, bottom_data, ind, scale, shape):
         method = getattr(self, method_name, lambda: torch.ones(4,4))
@@ -125,39 +126,39 @@ class Operation(object):
         return M
         
     def plus_x(self, bottom_data, ind, scale, shape):
-        if scale == None:
-            raise ValueError('Scale not passed')
+#         if scale == None:
+#             raise ValueError('Scale not passed')
   #       if shape == None:
   #           raise ValueError('Shape not passed')
         M = torch.eye(4)
-        M[0,3] = shape[ind] * scale
+        M[0,3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
     def plus_y(self, bottom_data, ind, scale, shape):
-        if scale == None:
-            raise ValueError('Scale not passed')
+   #      if scale == None:
+   #          raise ValueError('Scale not passed')
         # if shape == None:
         #     raise ValueError('Shape not passed')
         M = torch.eye(4)
-        M[1,3] = shape[ind] * scale
+        M[1,3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
     def minus_x(self, bottom_data, ind, scale, shape):
-        if scale == None:
-            raise ValueError('Scale not passed')
+     #    if scale == None:
+     #        raise ValueError('Scale not passed')
         # if shape == None:
         #     raise ValueError('Shape not passed')
         M = torch.eye(4)
-        M[0,3] = -shape[ind] * scale
+        M[0,3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
     def minus_y(self, bottom_data, ind, scale, shape):
-        if scale == None:
-            raise ValueError('Scale not passed')
+       #  if scale == None:
+       #      raise ValueError('Scale not passed')
 #         if shape == None:
 #             raise ValueError('Shape not passed')
         M = torch.eye(4)
-        M[1,3] = -shape[ind] * scale
+        M[1,3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
 
