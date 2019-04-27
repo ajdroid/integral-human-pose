@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import ipdb
 
-from kin_layer_utils import *
+from .kin_layer_utils import *
 
 
 
