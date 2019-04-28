@@ -79,9 +79,8 @@ def main():
     dataset_name = ""
     for n_db in range(0, len(config.dataset.name)):
         dataset_name = dataset_name + config.dataset.name[n_db] + "_"
-    import ipdb; ipdb.set_trace()
     dataset_train = \
-        eval(dataset_name + "Dataset")(train_imdbs, True, '', config.train.patch_width, config.train.patch_height,
+        eval(dataset_name + "Dataset")(train_imdbs, True, config.train.patch_width, config.train.patch_height,
                                        config.train.rect_3d_width, config.train.rect_3d_height, batch_size,
                                        config.dataiter.mean, config.dataiter.std, config.aug, label_func, config.loss)
 
@@ -98,7 +97,7 @@ def main():
                                    num_workers=config.dataiter.threads, drop_last=True)
     valid_data_loader = DataLoader(dataset=dataset_valid, batch_size=batch_size, shuffle=False,
                                    num_workers=config.dataiter.threads, drop_last=False)
-
+    # import ipdb; ipdb.set_trace();
     # prepare network
     logger.info("Creating network")
     joint_num = dataset_train.joint_num
@@ -125,6 +124,7 @@ def main():
         speedometer = Speedometer(train_data_loader.batch_size, config.pytorch.frequent, auto_reset=False)
 
         beginT = time.time()
+        tloss = 0
         tloss = trainNet(epoch, train_data_loader, net, optimizer, config.loss, loss_func, speedometer)
         endt1 = time.time() - beginT
 
@@ -134,7 +134,7 @@ def main():
                      config.train.patch_width, config.train.patch_height, devices,
                      valid_imdbs[config.dataiter.target_id].flip_pairs, flip_test=False)
         endt2 = time.time() - beginT
-
+        #
         beginT = time.time()
         evalNet(epoch, preds_in_patch_with_score, valid_data_loader, valid_imdbs[config.dataiter.target_id],
                 config.train.patch_width, config.train.patch_height, config.train.rect_3d_width,

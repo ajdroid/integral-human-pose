@@ -1,5 +1,5 @@
 pytorch:
-  gpus: '0,1,2,3'
+  gpus: '2'
   frequent: 100
   output_path: './output/hm36/resnet50v1_ft'
   log_path: './log/hm36/resnet50v1_ft'
@@ -7,16 +7,12 @@ pytorch:
   loss: 'joint_location'
 dataset:
   name:
-   - 'mpii'
    - 'hm36'
   path:
-   - 'mpii'
    - 'hm36'
   train_image_set:
    - 'train'
-   - 'train'
   test_image_set:
-   - 'valid'
    - 'validmin'
 dataiter:
     batch_images_per_ctx: 32
@@ -30,7 +26,7 @@ dataiter:
     - 58.395 #- '0.229*255'
     - 57.120 #- '0.224*255'
     - 57.375 #- '0.225*255'
-    target_id: 1
+    target_id: 0
 optimizer:
   lr: 0.001
   lr_epoch_step: '90,120'

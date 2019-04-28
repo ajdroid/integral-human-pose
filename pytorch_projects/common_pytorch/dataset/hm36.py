@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 import pickle as pk
+from glob import glob as glob
 
 from .imdb import IMDB
 
@@ -295,6 +296,18 @@ class hm36(IMDB):
         for i in range(0, len(subject_list)):
             for j in range(0, s_hm36_act_num):
                 for m in range(0, s_hm36_subact_num):
+                    # for each check that the number of images are equal
+                    # /home/abhijat/gitstuff/integral-human-pose/data/hm36/images/temp_folder
+                    temp_folder = os.path.join('../../data/hm36/images/'+ self._H36FolderName(subject_list[i], j, m, 1))
+                    temp_txtfile = os.path.join('../../data/hm36/annot/'+ self._H36FolderName(subject_list[i], j, m, 1)\
+                                                + '/matlab_meta.txt')
+                    fp = open(temp_txtfile)  # Open file on read mode
+                    lines = fp.read().split("\n")  # Create a list containing all lines
+                    num_expected = int(lines[0])
+                    fp.close()  # Close file
+                    if len(glob(temp_folder+'/*.jpg')) != num_expected:
+                        # print(temp_folder)
+                        continue
                     for n in range(0, s_hm36_camera_num):
                         folders.append(self._H36FolderName(subject_list[i], j, m, n))
         return folders
@@ -334,7 +347,7 @@ class hm36(IMDB):
             sample_num = 10
             step = -1
             folder_start = 0
-            folder_end = 240
+            folder_end = 224#240
             folders = self._AllHuman36Folders([5, 6])
         elif image_set_name == 'validfull':
             sample_num = -1
@@ -373,7 +386,8 @@ class hm36(IMDB):
 
     def gt_db(self):
         folders, sample_num, step, folder_start, folder_end = self._sample_dataset(self.image_set_name)
-
+        # print(folders)
+        # import ipdb; ipdb.set_trace();
         db = None
         cache_file = os.path.join(self.cache_path, self.name + '_keypoint_db_sample' + str(sample_num) + '.pkl')
         if os.path.exists(cache_file):
@@ -388,11 +402,9 @@ class hm36(IMDB):
         gt_db = []
         for n_folder in range(folder_start, folder_end):
             print('Loading folder ', n_folder, ' in ', len(folders))
-
             # load ground truth
             keypoints, trans, jt_list, rot, fl, c_p, img_width, img_height = parsing_hm36_gt_file(
                 os.path.join(self.dataset_path, "annot", folders[n_folder], 'matlab_meta.txt'))
-
             # random sample redundant video sequence
             if sample_num > 0:
                 img_index = np.random.choice(keypoints.shape[0], sample_num, replace=False)
