@@ -156,7 +156,7 @@ class KinematicLayer(nn.Module):
                 v = v.view(1,-1)
                 out[t][3*i: 3*i + 3] = v[0,:-1].squeeze()
 
-                out[t][-3:] = (out[t][8*3: 8*3 + 3] + out[t][6*3:6*3 + 3] )/ 2.
+            out[t][-3:] = (out[t][8*3: 8*3 + 3] + out[t][6*3:6*3 + 3] )/ 2.
 
         return out
         
