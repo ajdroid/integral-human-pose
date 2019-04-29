@@ -6,7 +6,7 @@ import torch.nn as nn
 from torchvision.models.resnet import model_zoo, model_urls
 
 from common_pytorch.base_modules.resnet import resnet_spec, ResNetBackbone
-from common_pytorch.base_modules.avg_pool_head import AvgPoolHead
+from common_pytorch.base_modules.kinematic_avg_pool_head import KinematicAvgPoolHead
 
 
 def get_default_network_config():
@@ -31,9 +31,10 @@ class ResPoseNet(nn.Module):
 
 
 def get_pose_net(cfg, num_joints):
+    num_motion_params = 29
     block_type, layers, channels, name = resnet_spec[cfg.num_layers]
     backbone_net = ResNetBackbone(block_type, layers)
-    head_net = AvgPoolHead(channels[-1], num_joints * 3, cfg.fea_map_size)
+    head_net = KinematicAvgPoolHead(channels[-1], num_motion_params * num_joints, cfg.fea_map_size)
     pose_net = ResPoseNet(backbone_net, head_net)
     return pose_net
 
