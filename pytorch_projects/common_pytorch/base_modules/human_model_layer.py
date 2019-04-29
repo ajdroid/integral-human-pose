@@ -17,7 +17,7 @@ class KinematicLayer(nn.Module):
         #Set up the layer
         self.SHAPE_NORM = 300.0
 
-        self.shape = torch.empty(Shape.NUM_SHAPE_PARAMETERS, 1)
+        self.shape = torch.empty(Shape.NUM_SHAPE_PARAMETERS, 1).cuda()
         self.shape[Shape.Knee2Ankle] = 300.0
         self.shape[Shape.Hip2Knee] = 350.0
         self.shape[Shape.Pelvis2Hip] = 75.0
@@ -33,7 +33,7 @@ class KinematicLayer(nn.Module):
         self.joint = [ [] for i in range(Joint.ORIG_NUM_JOINTS)]
 
         #Root
-        self.joint[Joint.Pelvis].append(('global_trans', - 1))
+        self.joint[Joint.Pelvis].append(('global_trans', -1))
         self.joint[Joint.Pelvis].append(('rot_z', Motion.RotZ))
         self.joint[Joint.Pelvis].append(('rot_x', Motion.RotX))
         self.joint[Joint.Pelvis].append(('rot_y', Motion.RotY))
@@ -122,7 +122,7 @@ class KinematicLayer(nn.Module):
 
     def update(self, method_name, bottom_data, ind, v, scale=None):
         """
-        Applies kinematic transoformation to vector v
+        Applies kinematic transformation to vector v
         params:
             method_name: string, name of function
             bottom_data: torch.Tensor, input motion_params
@@ -139,18 +139,24 @@ class KinematicLayer(nn.Module):
         return ko.mm(v)
 
     def forward(self, x):
-        out = torch.empty(3*Joint.ORIG_NUM_JOINTS + 3)
-        out.requires_grad = True
-        for i in range(Joint.ORIG_NUM_JOINTS):
-            v = torch.Tensor([[0.], [0.], [0.], [1.]])
-            v.requires_grad = True
-            # v = torch.transpose(v, 0)
-            for k in range(len(self.joint[i])-1, 0, -1):
-                v = self.update(self.joint[i][k][0], x[:-1], self.joint[i][k][1], v, x[-1])
-            v = v.view(1,-1)
-            out[3*i: 3*i + 3] = v[0,:-1].squeeze()
+        bs = x.shape[0]
+        # iterate through batch
+        out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS + 3)).cuda()
+        for t in range(bs):
+            # out[t].requires_grad = True
+            scale = x[t, -1]
+            motion_params = x[t, :-1]
+            for i in range(Joint.ORIG_NUM_JOINTS):
+                v = torch.Tensor([[0.], [0.], [0.], [1.]]).cuda()
+                v.requires_grad = True
+                # v = torch.transpose(v, 0)
+                for k in range(len(self.joint[i])-1, 0, -1):
+                    # import ipdb; ipdb.set_trace()
+                    v = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], v, scale)
+                v = v.view(1,-1)
+                out[t][3*i: 3*i + 3] = v[0,:-1].squeeze()
 
-        out[-3:] = (out[8*3: 8*3 + 3] + out[6*3:6*3 + 3] )/ 2.
+                out[t][-3:] = (out[t][8*3: 8*3 + 3] + out[t][6*3:6*3 + 3] )/ 2.
 
         return out
         

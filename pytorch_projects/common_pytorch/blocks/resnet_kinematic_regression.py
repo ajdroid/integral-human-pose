@@ -34,7 +34,7 @@ def get_pose_net(cfg, num_joints):
     num_motion_params = 29
     block_type, layers, channels, name = resnet_spec[cfg.num_layers]
     backbone_net = ResNetBackbone(block_type, layers)
-    head_net = KinematicAvgPoolHead(channels[-1], num_motion_params * num_joints, cfg.fea_map_size)
+    head_net = KinematicAvgPoolHead(channels[-1], num_motion_params * num_joints + 1, cfg.fea_map_size)
     pose_net = ResPoseNet(backbone_net, head_net)
     return pose_net
 
