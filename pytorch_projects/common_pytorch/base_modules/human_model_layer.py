@@ -156,23 +156,40 @@ class KinematicLayer(nn.Module):
     def forward(self, x):
         bs = x.shape[0]
         # iterate through batch
-        out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS)).cuda()
+        #out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS)).cuda()
         for t in range(bs):
             # out[t].requires_grad = True
             scale = x[t, -1]
             motion_params = x[t, :-1]
+            out_sub = None
             for i in range(Joint.ORIG_NUM_JOINTS):
-                v = torch.Tensor([[0.], [0.], [0.], [1.]]).cuda()
-                v.requires_grad = True
+                # v = torch.Tensor([[0.], [0.], [0.], [1.]]).cuda()
+                # v.requires_grad = True
                 # v = torch.transpose(v, 0)
+                v1 = None
                 for k in range(len(self.joint[i])-1, 0, -1):
                     # import ipdb; ipdb.set_trace()
-                    v = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], v, scale)
-                v = v.view(1,-1)
-                out[t][3*i: 3*i + 3] = v[0,:-1].squeeze()
+                    if not v1:
+                        v1 = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], self.v, scale)
+                    else:
+                        v1 = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], v1, scale)
+                v1 = v1.view(1, -1)
+                if not out_sub:
+                    out_sub = v1
+                else:
+                    out_sub = torch.cat((out_sub, v1), 1)
+                # out[t][3*i: 3*i + 3] = v[0,:-1].squeeze()
             # calculate thorax position w/ no motion params
-            out[t][-3:] = (out[t][Joint.L_Shoulder*3: Joint.L_Shoulder*3 + 3] \
-                           + out[t][Joint.R_Shoulder*3: Joint.R_Shoulder*3 + 3] )/ 2.
+            assert out_sub is not None
+            thorax_pos = (out_sub[Joint.L_Shoulder*3: Joint.L_Shoulder*3 + 3] \
+                    + out_sub[Joint.R_Shoulder*3: Joint.R_Shoulder*3 + 3]) / 2.
+            out_sub = torch.cat(out_sub, thorax_pos, 1)
+            if not out:
+                out = out_sub
+            else:
+                out = torch.cat((out, out_sub), 0)
+            # out[t][-3:] = (out[t][Joint.L_Shoulder*3: Joint.L_Shoulder*3 + 3] \
+                           # + out[t][Joint.R_Shoulder*3: Joint.R_Shoulder*3 + 3] )/ 2.
         # axis alignment fuckery wrt human 3.6 m data vs original kinematic model
         out = out.view(bs, 18, 3)
         out = torch.index_select(out, 2, torch.LongTensor([0, 2, 1]).cuda())
