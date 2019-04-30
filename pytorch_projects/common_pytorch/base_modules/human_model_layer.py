@@ -19,14 +19,17 @@ class KinematicLayer(nn.Module):
 
         self.shape = torch.empty(Shape.NUM_SHAPE_PARAMETERS, 1).cuda()
         self.shape[Shape.Knee2Ankle] = 300.0
-        self.shape[Shape.Hip2Knee] = 350.0
-        self.shape[Shape.Pelvis2Hip] = 75.0
-        self.shape[Shape.Pelvis2Torso] = 400.0
-        self.shape[Shape.Torso2Neck] = 73.96
-        self.shape[Shape.Neck2Head] = 249.03
-        self.shape[Shape.Elbow2Wrist] = 250.0
-        self.shape[Shape.Shoulder2Elbow] = 250.0
-        self.shape[Shape.Torso2Shoulder] = 170.0
+        self.shape[Shape.Hip2Knee] = 302.0
+        self.shape[Shape.Pelvis2Hip] = 84.7
+        self.shape[Shape.Pelvis2Torso] = 165.0
+        self.shape[Shape.Torso2Neck] = 161.6
+        self.shape[Shape.Neck2NoseY] = 73.46
+        self.shape[Shape.Neck2NoseZ] = 29.0
+        self.shape[Shape.Nose2HeadY] = 66.91
+        self.shape[Shape.Elbow2Wrist] = 160.6
+        self.shape[Shape.Shoulder2Elbow] = 187.16
+        self.shape[Shape.Neck2ShoulderX] = 117.0
+        self.shape[Shape.Neck2ShoulderY] = 6.5
         self.shape = self.shape / self.SHAPE_NORM
         self.kinematic_operator = Operation(self.SHAPE_NORM)
 
@@ -40,20 +43,29 @@ class KinematicLayer(nn.Module):
 
         #UpperBody
         self.joint[Joint.Torso] = self.joint[Joint.Pelvis].copy()
-        self.joint[Joint.Torso].append(('rot_z', Motion.Torso_RotZ))
-        self.joint[Joint.Torso].append(('rot_y', Motion.Torso_RotY))
+        self.joint[Joint.Torso].append(('rot_z', Motion.Pelvis_RotZ))
+        self.joint[Joint.Torso].append(('rot_x', Motion.Pelvis_RotX))
+        self.joint[Joint.Torso].append(('rot_y', Motion.Pelvis_RotY))
         self.joint[Joint.Torso].append(('plus_y', Shape.Pelvis2Torso))
         
         self.joint[Joint.Neck] = self.joint[Joint.Torso].copy()
-        self.joint[Joint.Neck].append(('rot_z', Motion.Neck_RotZ))
-        self.joint[Joint.Neck].append(('rot_x', Motion.Neck_RotX))
-        self.joint[Joint.Neck].append(('rot_y', Motion.Neck_RotY))
+        # self.joint[Joint.Neck].append(('rot_z', Motion.Torso_RotZ))
+        # self.joint[Joint.Neck].append(('rot_x', Motion.Torso_RotX))
+        # self.joint[Joint.Neck].append(('rot_y', Motion.Torso_RotY))
         self.joint[Joint.Neck].append(('plus_y', Shape.Torso2Neck))
     
-        self.joint[Joint.Head] = self.joint[Joint.Neck].copy()
-        self.joint[Joint.Head].append(('rot_x', Motion.Head_RotX))
-        self.joint[Joint.Head].append(('plus_y', Shape.Neck2Head))
-    
+        self.joint[Joint.Nose] = self.joint[Joint.Neck].copy()
+        self.joint[Joint.Nose].append(('rot_z', Motion.Neck_RotZ_H))
+        self.joint[Joint.Nose].append(('rot_x', Motion.Neck_RotX_H))
+        self.joint[Joint.Nose].append(('rot_y', Motion.Neck_RotY_H))
+        # check that we want this kind f addition
+        self.joint[Joint.Nose].append(('plus_y', Shape.Neck2NoseY))
+        self.joint[Joint.Nose].append(('minus_z', Shape.Neck2NoseZ))
+
+        self.joint[Joint.Head] = self.joint[Joint.Nose].copy()
+        self.joint[Joint.Head].append(('plus_y', Shape.Nose2HeadY))
+        self.joint[Joint.Head].append(('plus_z', Shape.Neck2NoseZ))
+
         #L_Leg
         self.joint[Joint.L_Hip] = self.joint[Joint.Pelvis].copy()
         self.joint[Joint.L_Hip].append(('plus_x', Shape.Pelvis2Hip))
@@ -71,6 +83,7 @@ class KinematicLayer(nn.Module):
         #R_Leg
         self.joint[Joint.R_Hip] = self.joint[Joint.Pelvis].copy()
         self.joint[Joint.R_Hip].append(('minus_x', Shape.Pelvis2Hip))
+
         self.joint[Joint.R_Knee] = self.joint[Joint.R_Hip].copy()
         self.joint[Joint.R_Knee].append(('rot_z', Motion.R_Hip_RotZ))
         self.joint[Joint.R_Knee].append(('rot_x', Motion.R_Hip_RotX))
@@ -82,8 +95,9 @@ class KinematicLayer(nn.Module):
         self.joint[Joint.R_Ankle].append(('minus_y', Shape.Knee2Ankle))
         
         #L_Arm
-        self.joint[Joint.L_Shoulder] = self.joint[Joint.Torso].copy()
-        self.joint[Joint.L_Shoulder].append(('plus_x', Shape.Torso2Shoulder))
+        self.joint[Joint.L_Shoulder] = self.joint[Joint.Neck].copy()
+        self.joint[Joint.L_Shoulder].append(('plus_x', Shape.Neck2ShoulderX))
+        self.joint[Joint.L_Shoulder].append(('minus_y', Shape.Neck2ShoulderY))
     
         self.joint[Joint.L_Elbow] = self.joint[Joint.L_Shoulder].copy()
         self.joint[Joint.L_Elbow].append(('rot_z', Motion.L_Shoulder_RotZ))
@@ -97,7 +111,8 @@ class KinematicLayer(nn.Module):
     
         #R_Arm
         self.joint[Joint.R_Shoulder] = self.joint[Joint.Torso].copy()
-        self.joint[Joint.R_Shoulder].append(('minus_x', Shape.Torso2Shoulder))
+        self.joint[Joint.R_Shoulder].append(('minus_x', Shape.Neck2ShoulderX))
+        self.joint[Joint.R_Shoulder].append(('minus_y', Shape.Neck2ShoulderY))
     
         self.joint[Joint.R_Elbow] = self.joint[Joint.R_Shoulder].copy()
         self.joint[Joint.R_Elbow].append(('rot_z', Motion.R_Shoulder_RotZ))
@@ -141,7 +156,7 @@ class KinematicLayer(nn.Module):
     def forward(self, x):
         bs = x.shape[0]
         # iterate through batch
-        out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS + 3)).cuda()
+        out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS)).cuda()
         for t in range(bs):
             # out[t].requires_grad = True
             scale = x[t, -1]
@@ -155,9 +170,13 @@ class KinematicLayer(nn.Module):
                     v = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], v, scale)
                 v = v.view(1,-1)
                 out[t][3*i: 3*i + 3] = v[0,:-1].squeeze()
-
-            out[t][-3:] = (out[t][8*3: 8*3 + 3] + out[t][6*3:6*3 + 3] )/ 2.
-
+            # calculate thorax position w/ no motion params
+            out[t][-3:] = (out[t][Joint.L_Shoulder*3: Joint.L_Shoulder*3 + 3] \
+                           + out[t][Joint.R_Shoulder*3: Joint.R_Shoulder*3 + 3] )/ 2.
+        # axis alignment fuckery wrt human 3.6 m data vs original kinematic model
+        out = out.view(bs, 18, 3)
+        out = torch.index_select(out, 2, torch.LongTensor([0, 2, 1]).cuda())
+        out = out.view(bs, -1)
         return out
         
 if __name__ == '__main__':

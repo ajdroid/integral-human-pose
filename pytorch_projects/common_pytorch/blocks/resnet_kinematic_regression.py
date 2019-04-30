@@ -7,7 +7,7 @@ from torchvision.models.resnet import model_zoo, model_urls
 
 from common_pytorch.base_modules.resnet import resnet_spec, ResNetBackbone
 from common_pytorch.base_modules.kinematic_avg_pool_head import KinematicAvgPoolHead
-from ..base_models.kin_layer_utils import Motion
+from common_pytorch.base_modules.kin_layer_utils import Motion
 
 def get_default_network_config():
     config = edict()

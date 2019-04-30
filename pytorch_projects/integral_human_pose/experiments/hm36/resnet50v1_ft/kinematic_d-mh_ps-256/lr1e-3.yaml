@@ -1,5 +1,5 @@
 pytorch:
-  gpus: '2'
+  gpus: '0'
   frequent: 100
   output_path: './output/hm36/resnet50v1_ft'
   log_path: './log/hm36/resnet50v1_ft'

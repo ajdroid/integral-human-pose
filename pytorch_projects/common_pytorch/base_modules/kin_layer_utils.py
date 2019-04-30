@@ -20,10 +20,13 @@ Shape = IntEnum('Shape', zip(['Knee2Ankle',
                                 'Pelvis2Hip', 
                                 'Pelvis2Torso',
                                 'Torso2Neck', 
-                                'Neck2Head', 
+                                'Nose2HeadY',
                                 'Elbow2Wrist', 
                                 'Shoulder2Elbow', 
-                                'Torso2Shoulder', 
+                                'Neck2ShoulderX',
+                                'Neck2ShoulderY',
+                                'Neck2NoseY',
+                                'Neck2NoseZ',
                                 'NUM_SHAPE_PARAMETERS'], count()))
 
 Motion = IntEnum('Motion', zip(['TransX',
@@ -32,8 +35,9 @@ Motion = IntEnum('Motion', zip(['TransX',
                                     'RotZ',
                                     'RotX',
                                     'RotY',
-                                    'Torso_RotY',
-                                    'Torso_RotZ',
+                                    'Pelvis_RotY',
+                                    'Pelvis_RotX',
+                                    'Pelvis_RotZ',
                                     'L_Hip_RotZ',
                                     'L_Hip_RotX',
                                     'L_Hip_RotY',
@@ -50,9 +54,9 @@ Motion = IntEnum('Motion', zip(['TransX',
                                     'R_Shoulder_RotX',
                                     'R_Shoulder_RotY',
                                     'R_Elbow_RotX',
-                                    'Neck_RotZ',
-                                    'Neck_RotX',
-                                    'Neck_RotY',
+                                    'Neck_RotZ_H',
+                                    'Neck_RotX_H',
+                                    'Neck_RotY_H',
                                     'Head_RotX',
                                     'NUM_PARAMETERS'], count()))
 
@@ -73,6 +77,7 @@ Joint = IntEnum('Joint', zip(['Pelvis',
                                 'R_Shoulder',
                                 'R_Elbow',
                                 'R_Wrist',
+                                'Thorax',
                                 'ORIG_NUM_JOINTS'], count()))
 
 #Define Kinematic Operator
@@ -145,6 +150,15 @@ class Operation(object):
         M[1,3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
+    def plus_z(self, bottom_data, ind, scale, shape):
+        #      if scale == None:
+        #          raise ValueError('Scale not passed')
+        # if shape == None:
+        #     raise ValueError('Shape not passed')
+        M = torch.eye(4).cuda()
+        M[2, 3] = shape[ind] * scale * self.SHAPE_NORM
+        return M
+
     def minus_x(self, bottom_data, ind, scale, shape):
      #    if scale == None:
      #        raise ValueError('Scale not passed')
@@ -164,4 +178,12 @@ class Operation(object):
         M[1,3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
+    def minus_z(self, bottom_data, ind, scale, shape):
+        #      if scale == None:
+        #          raise ValueError('Scale not passed')
+        # if shape == None:
+        #     raise ValueError('Shape not passed')
+        M = torch.eye(4).cuda()
+        M[2, 3] = -shape[ind] * scale * self.SHAPE_NORM
+        return M
 
