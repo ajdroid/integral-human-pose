@@ -97,93 +97,58 @@ class Operation(object):
         self.SHAPE_NORM = SHAPE_NORM
         return
 
-    def __call__(self, method_name, bottom_data, ind, scale, shape):
-        method = getattr(self, method_name, lambda: torch.ones(4,4))
-        return method(bottom_data, ind, scale, shape)
+    def __call__(self, method_name, bottom_data, ind, scale, shape, M):
+        method = getattr(self, method_name, lambda: None)
+        return method(bottom_data, ind, scale, shape, M)
 
-    def rot_x(self, bottom_data, ind, scale, shape):
-        M = torch.eye(4).cuda()
+    def rot_x(self, bottom_data, ind, scale, shape, M):
         M[1,1] = torch.cos(bottom_data[ind])
         M[1,2] = -torch.sin(bottom_data[ind])
         M[2,1] = torch.sin(bottom_data[ind])
         M[2,2] = torch.cos(bottom_data[ind])
         return M
 
-    def rot_y(self, bottom_data, ind, scale, shape):
-        M = torch.eye(4).cuda()
+    def rot_y(self, bottom_data, ind, scale, shape, M):
         M[0,0] = torch.cos(bottom_data[ind])
         M[0,2] = torch.sin(bottom_data[ind])
         M[2,0] = -torch.sin(bottom_data[ind])
         M[2,2] = torch.cos(bottom_data[ind])
         return M
 
-    def rot_z(self, bottom_data, ind, scale, shape):
-        M = torch.eye(4).cuda()
+    def rot_z(self, bottom_data, ind, scale, shape, M):
         M[0,0] = torch.cos(bottom_data[ind])
         M[0,1] = -torch.sin(bottom_data[ind])
         M[1,0] = torch.sin(bottom_data[ind])
         M[1,1] = torch.cos(bottom_data[ind])
         return M
 
-    def global_trans(self, bottom_data, ind, scale, shape):
-        M = torch.eye(4).cuda()
+    def global_trans(self, bottom_data, ind, scale, shape, M):
         M[0,3] = bottom_data[Motion.TransX]
         M[1,3] = bottom_data[Motion.TransY]
         M[2,3] = bottom_data[Motion.TransZ]
         return M
         
-    def plus_x(self, bottom_data, ind, scale, shape):
-#         if scale == None:
-#             raise ValueError('Scale not passed')
-  #       if shape == None:
-  #           raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
+    def plus_x(self, bottom_data, ind, scale, shape, M):
         M[0,3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
-    def plus_y(self, bottom_data, ind, scale, shape):
-   #      if scale == None:
-   #          raise ValueError('Scale not passed')
-        # if shape == None:
-        #     raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
+    def plus_y(self, bottom_data, ind, scale, shape, M):
         M[1,3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
-    def plus_z(self, bottom_data, ind, scale, shape):
-        #      if scale == None:
-        #          raise ValueError('Scale not passed')
-        # if shape == None:
-        #     raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
+    def plus_z(self, bottom_data, ind, scale, shape, M):
         M[2, 3] = shape[ind] * scale * self.SHAPE_NORM
         return M
 
-    def minus_x(self, bottom_data, ind, scale, shape):
-     #    if scale == None:
-     #        raise ValueError('Scale not passed')
-        # if shape == None:
-        #     raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
+    def minus_x(self, bottom_data, ind, scale, shape, M):
         M[0,3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
-    def minus_y(self, bottom_data, ind, scale, shape):
-       #  if scale == None:
-       #      raise ValueError('Scale not passed')
-#         if shape == None:
-#             raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
-        # import ipdb; ipdb.set_trace()
+    def minus_y(self, bottom_data, ind, scale, shape, M):
         M[1,3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
-    def minus_z(self, bottom_data, ind, scale, shape):
-        #      if scale == None:
-        #          raise ValueError('Scale not passed')
-        # if shape == None:
-        #     raise ValueError('Shape not passed')
-        M = torch.eye(4).cuda()
+    def minus_z(self, bottom_data, ind, scale, shape, M):
         M[2, 3] = -shape[ind] * scale * self.SHAPE_NORM
         return M
 
