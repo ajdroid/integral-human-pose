@@ -143,17 +143,17 @@ class KinematicLayer(nn.Module):
             scale: int, some scale parameter for bone 
         return: Torch.Tensor, output vector 
         """
-        self.M[:] = 0
-        self.M[0, 0] = 1
-        self.M[1, 1] = 1
-        self.M[2, 2] = 1
-        self.M[3, 3] = 1
+        M = Variable(self.M)
+        M[0, 0] = 1
+        M[1, 1] = 1
+        M[2, 2] = 1
+        M[3, 3] = 1
         ko = self.kinematic_operator(method_name,
                                         bottom_data, 
                                         ind, 
                                         scale, 
                                         self.shape,
-                                        Variable(self.M))
+                                        M)
         return ko.mm(v)
 
     def forward(self, x):
