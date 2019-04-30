@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 import ipdb
 
 from .kin_layer_utils import *
@@ -152,14 +153,13 @@ class KinematicLayer(nn.Module):
                                         ind, 
                                         scale, 
                                         self.shape,
-                                        self.M)
+                                        Variable(self.M))
         return ko.mm(v)
 
     def forward(self, x):
         bs = x.shape[0]
         # iterate through batch
         #out = torch.empty((bs, 3*Joint.ORIG_NUM_JOINTS)).cuda()
-        self.M.requires_grad=False
         out = None
         for t in range(bs):
             # out[t].requires_grad = True
@@ -175,7 +175,7 @@ class KinematicLayer(nn.Module):
                     # import ipdb; ipdb.set_trace()
                     if v1 is None:
                         # print("Updating v1", i)
-                        v1 = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], self.v, scale)
+                        v1 = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], Variable(self.v), scale)
                     else:
                         v1 = self.update(self.joint[i][k][0], motion_params, self.joint[i][k][1], v1, scale)
                 v1 = v1.view(1, -1)[:,:-1]
